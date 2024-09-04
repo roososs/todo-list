@@ -1,85 +1,9 @@
 import logo from './logo.svg'
 import './App.css'
-import { useRef, useState, useMemo, forwardRef, useReducer } from 'react'
+import { useRef, useMemo, useReducer } from 'react'
 import { v4 as uuid } from 'uuid'
 import { reducer, initialState } from './reducers/taskReducer'
-
-const Form = forwardRef(({ onSubmit, onChange }, ref) => {
-  return (
-    <>
-      <form className='input-group mb-3' onSubmit={onSubmit}>
-        <input
-          ref={ref}
-          className='form-control'
-          type='text'
-          onChange={onChange}
-          name='content'
-          placeholder='content'
-        ></input>
-        <button type='submit' className='btn btn-info '>
-          Add New ...
-        </button>
-      </form>
-    </>
-  )
-})
-
-function Select({ onSelect }) {
-  const options = ['All', 'Completed']
-  return (
-    <div className='d-flex justify-content-end align-items-center my-3 mx-1'>
-      <select
-        className='select form-select form-control form-control-lg'
-        style={{ width: '200px' }}
-        onChange={(e) => onSelect(e.target.value)}
-      >
-        {options.map((option) => (
-          <option value={option}>{option}</option>
-        ))}
-      </select>
-    </div>
-  )
-}
-
-function List({ onCheck, items }) {
-  return (
-    <ul className='list-group'>
-      {items.map((item) => (
-        <Item key={item.id} {...item} onCheck={onCheck} />
-      ))}
-    </ul>
-  )
-}
-
-function Item({ id, content, done, onCheck }) {
-  const isDone = done ? 'mx-3 item-done' : 'mx-3'
-  return (
-    <li className='list-group-item'>
-      <input
-        className='form-check-input'
-        type='checkbox'
-        checked={done}
-        onChange={(e) => onCheck(id, e.target.checked)}
-      ></input>
-      <span className={isDone}>{content}</span>
-    </li>
-  )
-}
-
-function Container({ children, title }) {
-  return (
-    <div className='container py-3'>
-      <div className='row d-flex align-items-center justify-content-center h-100'>
-        <div className='card'>
-          <div className='card-body py-4 px-4'>
-            <h1 className='text-info mb-3'>{title}</h1>
-            <div className='col'>{children}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+import { Container, Form, List, Select } from './components'
 
 function App() {
   const [state, dispatch] = useReducer(reducer, initialState)
