@@ -1,29 +1,53 @@
 import logo from './logo.svg'
 import './App.css'
-import { useRef, useState, useMemo, forwardRef } from 'react'
+import { useRef, useState, useMemo, forwardRef, useReducer } from 'react'
 import { v4 as uuid } from 'uuid'
 
-// ** Avant le useRef
-// function Form({ onSubmit, onChange }) {
-//   return (
-//     <>
-//       <form className='input-group mb-3' onSubmit={onSubmit}>
-//         <input
-//           className='form-control'
-//           type='text'
-//           onChange={onChange}
-//           name='content'
-//           placeholder='content'
-//         ></input>
-//         <button type='submit' className='btn btn-info '>
-//           Add New ...
-//         </button>
-//       </form>
-//     </>
-//   )
-// }
+const initialState = {
+  items: [
+    { id: 1, content: 'React formation', done: false },
+    { id: 2, content: 'API formation', done: true },
+  ],
+  all: [
+    { id: 1, content: 'React formation', done: false },
+    { id: 2, content: 'API formation', done: true },
+  ],
+  input: null,
+}
 
-// ** Aprés le useRef
+function reducer(state, action) {
+  switch (action.type) {
+    case 'submit':
+      return {
+        ...state,
+        items: [...state.items, action.payload.item],
+        all: [...state.items, action.payload.item],
+      }
+    case 'change':
+      return { ...state, input: action.payload.value }
+    case 'check':
+      const updated = state.items.map((item) =>
+        item.id === action.payload.id
+          ? { ...item, done: action.payload.bool }
+          : item
+      )
+      return {
+        ...state,
+        items: updated,
+        all: updated,
+      }
+    case 'select':
+      let filter = []
+      if (action.payload.option === 'Completed') {
+        filter = state.all.filter((item) => !!item.done)
+      } else filter = [...state.all]
+      return {
+        ...state,
+        items: filter,
+      }
+  }
+}
+
 const Form = forwardRef(({ onSubmit, onChange }, ref) => {
   return (
     <>
@@ -102,73 +126,31 @@ function Container({ children, title }) {
 }
 
 function App() {
+  const [state, dispatch] = useReducer(reducer, initialState)
   const ref = useRef()
-  const todo = [
-    { id: 1, content: 'React formation', done: false },
-    { id: 2, content: 'API formation', done: true },
-  ]
-  const [input, setInput] = useState(null)
-  const [items, setItems] = useState(todo)
-  const [all, setAll] = useState(items)
-  const isValid = useMemo(() => !!input, [input]) //vérification si input n'est pas null
+  const isValid = useMemo(() => !!state.input, [state.input])
 
   const handleOnChange = (e) => {
-    setInput(e.target.value)
+    dispatch({
+      type: 'change',
+      payload: { value: e.target.value },
+    })
   }
   const handleOnSubmit = (e) => {
     e.preventDefault()
-    // if (!input) { // Supprimer aprés l'utilisation de useMemo
-    //   return false
-    // }
-    // setItems([
-    //   {
-    //     id: uuid(),
-    //     content: input,
-    //     done: false,
-    //   },
-    //   ...items,
-    // ])
-    // setInput(null) // ne vide pas l'input donc on utilise useRef
-    // ref.current.value = null
-
-    //** aprés use Memo
     if (isValid) {
-      setItems([
-        {
-          id: uuid(),
-          content: input,
-          done: false,
-        },
-        ...items,
-      ])
-      setAll([
-        [
-          {
-            id: uuid(),
-            content: input,
-            done: false,
-          },
-          ...items,
-        ],
-      ])
-      setInput(null) // ne vide pas l'input donc on utilise useRef
+      dispatch({
+        type: 'submit',
+        payload: { item: { id: uuid(), content: state.input, done: false } },
+      })
       ref.current.value = null
     }
-    //** aprés use Memo
   }
   const handleOnCheck = (id, bool) => {
-    const updated = items.map((item) =>
-      item.id === id ? { ...item, done: bool } : item
-    )
-    setItems([...updated])
-    setAll([...updated])
+    dispatch({ type: 'check', payload: { id: id, bool: bool } })
   }
   const handleOnSelect = (option) => {
-    let filter = []
-    if (option === 'Completed') {
-      filter = all.filter((item) => !!item.done)
-    } else filter = all
-    setItems(filter)
+    dispatch({ type: 'select', payload: { option: option } })
   }
   return (
     <div className='App'>
@@ -176,7 +158,7 @@ function App() {
         <Container title='Gestionnaire des taches'>
           <Form ref={ref} onSubmit={handleOnSubmit} onChange={handleOnChange} />
           <Select onSelect={handleOnSelect} />
-          <List onCheck={handleOnCheck} items={items} />
+          <List onCheck={handleOnCheck} items={state.items} />
         </Container>
       </header>
     </div>
